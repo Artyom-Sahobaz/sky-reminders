@@ -40,7 +40,8 @@ A provider with an empty `clientId` has its button hidden. Step-by-step Google i
 
 While the Google app's audience is **Internal**, only accounts in that Google Workspace can sign in. To let
 anyone sign in, switch it to **External** and submit it for Google's verification; that needs a homepage and
-privacy policy on your own domain (drafts in [website/](website/)).
+privacy policy on a domain you control. They live in [docs/](docs/) and are served by GitHub Pages:
+https://artyom-sahobaz.github.io/sky-reminders/ and https://artyom-sahobaz.github.io/sky-reminders/privacy.html.
 
 People can also connect a calendar without signing in, by pasting its *secret iCal address* in Settings.
 
@@ -56,7 +57,7 @@ People can also connect a calendar without signing in, by pasting its *secret iC
 | `src/google.js`, `src/microsoft.js` | Sign-in and calendar reading for each provider |
 | `src/calendar.js` | Secret iCal feeds, meeting-link detection |
 | `src/fonts/` | Inter typeface (SIL Open Font License) |
-| `website/` | Draft homepage and privacy policy for flowvirtualassistant.com |
+| `docs/` | Public homepage and privacy policy (GitHub Pages) |
 
 ## Development checks
 
