@@ -354,12 +354,14 @@ const TEST_TITLES = {
   plane: 'Design review with the team', jet: 'Investor update', biplane: 'Weekly planning',
   helicopter: 'Client check-in', balloon: 'Quick sync call', car: 'Coffee chat with Sam',
   bike: '1:1 with Priya', scooter: 'Standup', boat: 'Product demo',
+  fighter: 'Launch go / no-go', drone: 'Site survey review', tank: 'Quarterly targets', police: 'Compliance check',
+  swat: 'Incident response drill',
 };
 // style: a vehicle key, or null to pick the way a real reminder would (for accountKey if given).
 function testReminder(style, accountKey) {
   const key = accountKey || (sources()[0] || {}).key;
   style = style || styleFor(15, key);
-  const sky = VEHICLES[style] && VEHICLES[style].lane === 'sky' && style !== 'balloon';
+  const sky = VEHICLES[style] && VEHICLES[style].kind === 'tow';
   const lead = sky ? 15 : 5;
   const start = Date.now() + lead * 60000;
   sendToOverlay({
@@ -598,9 +600,10 @@ async function gallery(dir) {
   if (welcomeWin) welcomeWin.close();
   await wait(1500);
   const batches = [
-    ['plane', 'jet', 'biplane', 'helicopter'],
-    ['balloon', 'car', 'bike', 'scooter'],
-    ['boat', 'car'],
+    ['plane', 'jet', 'fighter', 'biplane'],
+    ['helicopter', 'balloon', 'drone'],
+    ['car', 'bike', 'scooter', 'boat'],
+    ['tank', 'police', 'swat'],
   ];
   for (let i = 0; i < batches.length; i++) {
     for (const k of batches[i]) {
@@ -610,7 +613,7 @@ async function gallery(dir) {
     await wait(4200);
     fs.writeFileSync(path.join(dir, `gallery-${i + 1}.png`), (await overlay.webContents.capturePage()).toPNG());
     if (i === batches.length - 1) {
-      await overlay.webContents.executeJavaScript("document.querySelector('.v-car .craft').click(); 1");
+      await overlay.webContents.executeJavaScript("document.querySelector('.bubble .craft').click(); 1");
       await wait(1200);
       fs.writeFileSync(path.join(dir, 'gallery-card-ground.png'), (await overlay.webContents.capturePage()).toPNG());
     }

@@ -37,6 +37,14 @@
   @keyframes roll { to { transform: rotate(-360deg) } }
   .idle .wheel { animation-play-state: paused; }
   .waves { animation: waves 1.3s linear infinite; }
+  .siren-r { animation: siren .7s steps(1) infinite; }
+  .siren-b { animation: siren .7s steps(1) infinite reverse; }
+  @keyframes siren { 0% { opacity: 1 } 50% { opacity: .15 } }
+  .flame { transform-box: fill-box; transform-origin: left center; animation: flame .12s ease-in-out infinite alternate; }
+  @keyframes flame { from { transform: scaleX(.7); opacity: .8 } to { transform: scaleX(1.15); opacity: 1 } }
+  .blink { animation: siren 1.2s steps(1) infinite; }
+  .v-drone.idle .bob { animation: hover 1.8s ease-in-out infinite; }
+  @keyframes hover { 0%, 100% { transform: translateY(0) rotate(-1.5deg) } 50% { transform: translateY(-8px) rotate(1.5deg) } }
   @keyframes waves { to { transform: translateX(20px) } }
 
   /* tow: banner trailing behind */
@@ -158,7 +166,7 @@
   const W = () => window.innerWidth;
   const H = () => window.innerHeight;
   const active = new Map(); // id -> {el, r, slot}
-  const SLOT = { sky: 200, ground: 215 };
+  const SLOT = { sky: 220, ground: 215 };
 
   // ---- click-through: only the flying things catch the mouse ----
   let interactive = false;

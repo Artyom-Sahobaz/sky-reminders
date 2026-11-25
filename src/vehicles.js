@@ -187,7 +187,96 @@ const VEHICLES = {
       ${waves}
     </svg>`,
   },
+  fighter: {
+    label: 'Fighter jet', lane: 'sky', kind: 'tow', enter: 'right', exit: 'left', notes: [392, 523, 784],
+    svg: `<svg width="190" height="72" viewBox="0 0 190 72" aria-hidden="true">
+      <path class="flame" d="M170 31 L188 36 L170 41 Z" fill="#ffb020"/>
+      <path d="M142 24 L158 4 L170 4 L164 26 Z" fill="#5f6d4c"/>
+      <path d="M72 38 L134 38 L112 68 L96 68 Z" fill="#5f6d4c"/>
+      <rect x="86" y="60" width="22" height="3.5" rx="1.75" fill="#c9d3e3"/>
+      <path d="M4 36 L40 27 L150 25 L172 30 L172 42 L150 46 L40 45 Z" fill="#7d8b6a"/>
+      <path d="M36 30 Q46 19 64 23 L68 30 Z" fill="#4cc9f0"/>
+      <path d="M146 38 L172 48 L170 53 L144 43 Z" fill="#5f6d4c"/>
+      <circle cx="112" cy="51" r="5" fill="#fffaf2"/><circle cx="112" cy="51" r="2.4" fill="#ff6b6b"/>
+      <path d="M78 34 L140 33" stroke="#6b7858" stroke-width="2"/>
+      ${face(24, 33, 0.75)}
+    </svg>`,
+  },
+
+  drone: {
+    label: 'Drone', lane: 'sky', kind: 'tag', enter: 'bottom', exit: 'up', notes: [988, 1319, 988],
+    svg: `<svg width="156" height="84" viewBox="0 0 156 84" aria-hidden="true">
+      <path d="M56 40 L20 30 M100 40 L136 30" stroke="${INK}" stroke-width="5" stroke-linecap="round"/>
+      <rect x="16" y="22" width="8" height="10" rx="2" fill="${INK}"/><rect x="132" y="22" width="8" height="10" rx="2" fill="${INK}"/>
+      <g class="rotor" style="transform-origin: 20px 21px"><ellipse cx="20" cy="21" rx="19" ry="3" fill="${INK}" opacity=".7"/></g>
+      <g class="rotor" style="transform-origin: 136px 21px"><ellipse cx="136" cy="21" rx="19" ry="3" fill="${INK}" opacity=".7"/></g>
+      <circle class="blink" cx="20" cy="33" r="2.6" fill="#06d6a0"/><circle class="blink" cx="136" cy="33" r="2.6" fill="#ff6b6b"/>
+      <path d="M60 60 L52 76 M96 60 L104 76" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M46 76 H58 M98 76 H110" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>
+      <rect x="48" y="30" width="60" height="30" rx="15" fill="#e9edf5"/>
+      <rect x="52" y="32" width="52" height="8" rx="4" fill="#4cc9f0" opacity=".35"/>
+      <circle cx="78" cy="64" r="8" fill="${INK}"/><circle cx="78" cy="64" r="3.5" fill="#4cc9f0"/>
+      <circle cx="68" cy="44" r="2.8" fill="${INK}"/><circle cx="88" cy="44" r="2.8" fill="${INK}"/>
+      <path d="M72 50 q6 4 12 0" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    </svg>`,
+  },
+
+  tank: {
+    label: 'Tank', lane: 'ground', kind: 'bubble', enter: 'right', exit: 'left', notes: [196, 262, 330],
+    svg: `<svg width="184" height="92" viewBox="0 0 184 92" aria-hidden="true">
+      <rect x="4" y="26" width="60" height="7" rx="3.5" fill="#4e6a36"/>
+      <rect x="0" y="24" width="10" height="11" rx="2" fill="#3f572b"/>
+      <path d="M62 46 Q64 24 94 22 L120 22 Q134 24 136 46 Z" fill="#7fa35a"/>
+      <ellipse cx="104" cy="22" rx="11" ry="4" fill="#5d7d42"/>
+      <ellipse cx="116" cy="34" rx="8" ry="5" fill="#6a8f47"/>
+      <path d="M18 62 L30 46 L156 46 L168 62 Z" fill="#6f8f4e"/>
+      <ellipse cx="128" cy="54" rx="12" ry="4" fill="#5d7d42"/><ellipse cx="70" cy="53" rx="9" ry="3.5" fill="#5d7d42"/>
+      ${face(46, 50, 0.85)}
+      <rect x="10" y="60" width="164" height="28" rx="14" fill="#3b4a2f"/>
+      ${[28, 54, 80, 106, 132, 158].map((x) => wheel(x, 74, 9, '#6b7a55')).join('')}
+    </svg>`,
+  },
+
+  police: {
+    label: 'Police car', lane: 'ground', kind: 'bubble', enter: 'right', exit: 'left', notes: [988, 740, 988, 740],
+    svg: `<svg width="170" height="86" viewBox="0 0 170 86" aria-hidden="true">
+      <rect x="78" y="10" width="40" height="8" rx="4" fill="${INK}"/>
+      <rect class="siren-r" x="80" y="11" width="17" height="6" rx="3" fill="#ff3b3b"/>
+      <rect class="siren-b" x="99" y="11" width="17" height="6" rx="3" fill="#3b82ff"/>
+      <path d="M8 60 Q8 44 24 42 L46 40 L62 22 Q66 18 74 18 L118 18 Q126 18 130 24 L144 42 Q162 44 164 58 L164 66 Q164 70 160 70 L12 70 Q8 70 8 66 Z" fill="#f4f6fb"/>
+      <path d="M8 56 L164 56 L164 66 Q164 70 160 70 L12 70 Q8 70 8 66 Z" fill="#1e3a8a"/>
+      <path d="M66 26 L96 26 L96 42 L54 42 Z" fill="#bff3ff"/>
+      <path d="M102 26 L122 26 Q125 26 127 29 L136 42 L102 42 Z" fill="#bff3ff"/>
+      <path d="M99 44 L99 66" stroke="#c9d3e3" stroke-width="2"/>
+      <path d="M118 45 l3 6 6 1 -4.5 4 1 6 -5.5 -3 -5.5 3 1 -6 -4.5 -4 6 -1 Z" fill="#ffd166"/>
+      <ellipse cx="13" cy="50" rx="4.5" ry="5" fill="#ffd166"/>
+      <rect x="158" y="47" width="6" height="7" rx="2" fill="#c0392b"/>
+      ${face(34, 50, 0.85)}
+      ${wheel(44, 70, 14)}${wheel(132, 70, 14)}
+    </svg>`,
+  },
+
+  swat: {
+    label: 'SWAT truck', lane: 'ground', kind: 'bubble', enter: 'right', exit: 'left', notes: [330, 330, 440],
+    svg: `<svg width="196" height="104" viewBox="0 0 196 104" aria-hidden="true">
+      <rect x="120" y="6" width="34" height="8" rx="4" fill="${INK}"/>
+      <rect class="siren-r" x="122" y="7" width="14" height="6" rx="3" fill="#ff3b3b"/>
+      <rect class="siren-b" x="138" y="7" width="14" height="6" rx="3" fill="#3b82ff"/>
+      <path d="M6 78 L6 50 Q6 40 18 38 L44 36 L58 16 Q60 14 64 14 L184 14 Q190 14 190 20 L190 82 Q190 86 186 86 L10 86 Q6 86 6 82 Z" fill="#243049"/>
+      <path d="M48 38 L62 20 L88 20 L88 38 Z" fill="#9fd8ec"/>
+      <rect x="98" y="22" width="18" height="8" rx="2" fill="#9fd8ec"/><rect x="124" y="22" width="18" height="8" rx="2" fill="#9fd8ec"/><rect x="150" y="22" width="18" height="8" rx="2" fill="#9fd8ec"/>
+      <rect x="96" y="46" width="86" height="10" rx="2" fill="#ffd166"/>
+      <path d="M92 40 L92 82" stroke="#33405d" stroke-width="2.5"/>
+      <rect x="2" y="70" width="18" height="10" rx="3" fill="#4a5672"/>
+      <path d="M6 64 h14 M6 68 h14" stroke="#4a5672" stroke-width="2"/>
+      <ellipse cx="11" cy="52" rx="4" ry="5" fill="#ffd166"/>
+      <circle cx="34" cy="52" r="2.6" fill="#fffaf2"/>
+      <path d="M28 60 q5 4 10 0" stroke="#fffaf2" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      ${wheel(46, 86, 16)}${wheel(156, 86, 16)}
+    </svg>`,
+  },
 };
 
-const VEHICLE_KEYS = Object.keys(VEHICLES);
+const ORDER = ['plane', 'jet', 'fighter', 'biplane', 'helicopter', 'balloon', 'drone', 'car', 'police', 'swat', 'tank', 'bike', 'scooter', 'boat'];
+const VEHICLE_KEYS = ORDER.filter((k) => VEHICLES[k]).concat(Object.keys(VEHICLES).filter((k) => !ORDER.includes(k)));
 if (typeof module !== 'undefined') module.exports = { VEHICLES, VEHICLE_KEYS };
