@@ -37,17 +37,26 @@
   .link { color: #0a8f6c; font-size: 12px; }
   .pill { font-size: 11px; font-weight: 600; background: #efe7da; color: var(--muted); border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: 2px; }
   ul.accounts { list-style: none; margin: 10px 0 0; padding: 0; }
-  ul.accounts li { display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 6px 6px 6px 12px; margin-top: 6px; }
-  ul.accounts button { padding: 5px 10px; font-size: 12px; }
+  ul.accounts li.acct { background: #fff; border: 1px solid var(--line); border-left: 5px solid var(--c, #4f7cff); border-radius: 12px; padding: 10px 10px 10px 12px; margin-top: 8px; }
+  .acct-top { display: grid; grid-template-columns: 30px 1fr 168px auto auto; gap: 8px; align-items: center; }
+  .acct-top input[type=text], .acct-top select { padding: 6px 8px; font-size: 13px; }
+  .acct-top input[type=color] { width: 30px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; }
+  .acct-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0 38px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .acct-sub.warn { color: #c0392b; }
+  ul.accounts button { padding: 6px 10px; font-size: 12px; }
+  .ev-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .ev-acct { font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
 <main>
   <h1>🎈 Sky Reminders</h1>
-  <p class="sub">A plane or balloon flies onto your screen before each meeting. Click it for details and the join link.</p>
+  <p class="sub">A little vehicle brings each meeting onto your screen. Click it for details and the join link.</p>
 
   <section>
     <h2>Calendars</h2>
+    <div class="help">Reminders from every calendar below show up in one place. Give each one a name and colour
+      so you can see which account a reminder is for, and pick which vehicle brings its reminders.</div>
     <ul class="accounts" id="accounts"></ul>
     <div class="bar" style="margin-top:10px">
       <button id="addGoogle">+ Google account</button>
@@ -123,6 +132,7 @@
   const fmt = (t) => new Date(t).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 
   function render({ settings, status, vehicles }) {
+    if (vehicles) VEH = vehicles;
     if (vehicles && !$('style').dataset.filled) {
       for (const v of vehicles) {
         const o = document.createElement('option');
@@ -144,19 +154,77 @@
     if (status) renderStatus(status);
   }
 
+  let VEH = [];
+  let acctSig = '';
+  const PROVIDER_LABEL = { google: 'Google', microsoft: 'Microsoft', ical: 'iCal address' };
+
+  // Rebuilt only when the set of calendars changes, so typing a name isn't interrupted by a sync.
   function renderAccounts(list) {
+    list = list || [];
+    const sig = JSON.stringify([VEH.length, list.map((a) => [a.key, a.email, a.needsSignIn])]);
+    if (sig === acctSig) return;
+    acctSig = sig;
     const ul = $('accounts');
     ul.innerHTML = '';
-    if (!(list || []).length) ul.innerHTML = '<li class="status">No account connected yet.</li>';
-    for (const acc of list || []) {
+    if (!list.length) ul.innerHTML = '<li class="status">No calendar connected yet.</li>';
+    for (const acc of list) {
       const li = document.createElement('li');
-      const span = document.createElement('span');
-      span.textContent = (acc.needsSignIn ? '⚠ ' : '✓ ') + acc.email + (acc.provider === 'microsoft' ? '  · Microsoft' : '  · Google') + (acc.needsSignIn ? ' (sign in again)' : '');
-      const b = document.createElement('button'); b.textContent = 'Remove';
-      b.onclick = async () => renderStatus((await window.sky.accountRemove({ email: acc.email, provider: acc.provider })).status);
-      li.append(span, b);
+      li.className = 'acct';
+      li.dataset.key = acc.key;
+      li.style.setProperty('--c', acc.color);
+      li.innerHTML = `
+        <div class="acct-top">
+          <input type="color" title="Colour for this calendar" />
+          <input type="text" maxlength="40" spellcheck="false" />
+          <select title="Which vehicle brings reminders from this calendar"></select>
+          <button data-a="test" title="Show a test reminder for this calendar">Test</button>
+          <button data-a="remove">Remove</button>
+        </div>
+        <div class="acct-sub"></div>`;
+      const [color, name] = li.querySelectorAll('input');
+      const sel = li.querySelector('select');
+      color.value = acc.color;
+      name.value = acc.name;
+      name.placeholder = acc.email;
+      const opts = [['default', 'Vehicle: main setting'], ['mix', 'Mix it up'], ['classic', 'Classic: plane, then balloon'],
+        ...VEH.map((v) => [v.key, v.label])];
+      for (const [v, t] of opts) sel.add(new Option(t, v));
+      sel.value = acc.style || 'default';
+      const sub = li.querySelector('.acct-sub');
+      sub.textContent = `${acc.email} · ${PROVIDER_LABEL[acc.provider] || acc.provider}` + (acc.needsSignIn ? ' · sign-in expired, remove and add it again' : '');
+      if (acc.needsSignIn) sub.classList.add('warn');
+
+      color.oninput = () => li.style.setProperty('--c', color.value);
+      color.onchange = savePrefs;
+      name.onchange = savePrefs;
+      sel.onchange = savePrefs;
+      li.querySelector('[data-a=test]').onclick = async () => {
+        await savePrefs();
+        window.sky.test(null, acc.key);
+      };
+      li.querySelector('[data-a=remove]').onclick = async () => {
+        acctSig = '';
+        renderStatus((await window.sky.accountRemove(acc.key)).status);
+      };
       ul.appendChild(li);
     }
+  }
+
+  function collectPrefs() {
+    const out = {};
+    for (const li of document.querySelectorAll('li.acct')) {
+      const [color, name] = li.querySelectorAll('input');
+      out[li.dataset.key] = { name: name.value, color: color.value, style: li.querySelector('select').value };
+    }
+    return out;
+  }
+
+  async function savePrefs() {
+    $('gmsg').className = 'status';
+    $('gmsg').textContent = 'Saving…';
+    await window.sky.saveSettings(collect());
+    $('gmsg').textContent = 'Saved ✓';
+    setTimeout(() => { if ($('gmsg').textContent === 'Saved ✓') $('gmsg').textContent = ''; }, 2000);
   }
 
   function renderStatus({ lastSync, upcoming, accounts, providers }) {
@@ -175,7 +243,13 @@
     for (const e of upcoming) {
       const li = document.createElement('li');
       const t = document.createElement('span'); t.className = 't'; t.textContent = fmt(e.start);
-      const n = document.createElement('span'); n.textContent = e.title;
+      const n = document.createElement('span');
+      if (e.showAccount && e.accountColor) {
+        const d = document.createElement('i'); d.className = 'ev-dot'; d.style.background = e.accountColor; d.title = e.accountName;
+        n.appendChild(d);
+      }
+      n.appendChild(document.createTextNode(e.title));
+      if (e.showAccount && e.accountName) { const a = document.createElement('span'); a.className = 'ev-acct'; a.textContent = ' · ' + e.accountName; n.appendChild(a); }
       if (e.link) { const l = document.createElement('span'); l.className = 'link'; l.textContent = ' · has link'; n.appendChild(l); }
       li.append(t, n);
       ul.appendChild(li);
@@ -192,6 +266,7 @@
       sound: $('sound').checked,
       launchAtLogin: $('login').checked,
       google: { clientId: $('cid').value, clientSecret: $('csecret').value },
+      accountPrefs: collectPrefs(),
   });
 
   $('save').onclick = async () => {
@@ -206,16 +281,22 @@
     msg.className = 'status';
     msg.textContent = 'Saving…';
     await window.sky.saveSettings(collect());
-    msg.textContent = 'Finish signing in in your browser…';
+    msg.textContent = 'Finish signing in in your browser… ';
+    const cancel = document.createElement('button');
+    cancel.textContent = 'Cancel';
+    cancel.style.cssText = 'padding:3px 10px;font-size:12px';
+    cancel.onclick = () => window.sky.accountCancel();
+    msg.appendChild(cancel);
     const res = await window.sky.accountAdd(provider);
     if (res.error) { msg.className = 'status err'; msg.textContent = res.error; return; }
+    acctSig = '';
     msg.textContent = 'Connected ✓';
     renderStatus(res.status);
   }
   $('addGoogle').onclick = () => addAccount('google');
   $('addMicrosoft').onclick = () => addAccount('microsoft');
   $('tplane').onclick = () => window.sky.test($('style').value === 'mix' || $('style').value === 'classic' ? 'plane' : $('style').value);
-  $('tballoon').onclick = () => window.sky.test('surprise');
+  $('tballoon').onclick = () => window.sky.test(null);
 </script>
 </body>
 </html>

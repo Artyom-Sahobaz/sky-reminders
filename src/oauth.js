@@ -5,6 +5,11 @@ const http = require('http');
 const crypto = require('crypto');
 const { shell } = require('electron');
 
+let cancelCurrent = null; // ends the sign-in that is waiting, if any
+function cancelSignIn() {
+  if (cancelCurrent) cancelCurrent();
+}
+
 const b64url = (buf) => buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
 const page = (ok, msg) => `<!doctype html><meta charset="utf-8"><title>Sky Reminders</title>
@@ -34,6 +39,7 @@ function listenLoopback(handler) {
  *        exchanges the code for tokens; its result is returned from loopbackSignIn
  */
 async function loopbackSignIn({ authUrl, host, params, finish }) {
+  cancelSignIn(); // only one sign-in at a time
   const verifier = b64url(crypto.randomBytes(32));
   const challenge = b64url(crypto.createHash('sha256').update(verifier).digest());
   const state = b64url(crypto.randomBytes(16));
@@ -45,11 +51,13 @@ async function loopbackSignIn({ authUrl, host, params, finish }) {
     const end = (err, value) => {
       if (done) return;
       done = true;
+      cancelCurrent = null;
       clearTimeout(timer);
       if (server) server.close();
       err ? reject(err) : resolve(value);
     };
     const timer = setTimeout(() => end(new Error('Sign-in timed out after 5 minutes')), 5 * 60000);
+    cancelCurrent = () => end(new Error('cancelled'));
 
     server = await listenLoopback(async (req, res) => {
       const url = new URL(req.url, 'http://x');
@@ -104,4 +112,4 @@ function jwtClaims(idToken) {
   return JSON.parse(Buffer.from(String(idToken).split('.')[1], 'base64').toString());
 }
 
-module.exports = { loopbackSignIn, postForm, jwtClaims };
+module.exports = { loopbackSignIn, cancelSignIn, postForm, jwtClaims };

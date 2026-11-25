@@ -1,6 +1,10 @@
 // Fetches Google Calendar "secret iCal address" feeds and turns them into a
 // flat, sorted list of upcoming timed events.
 const ical = require('node-ical');
+const crypto = require('crypto');
+
+// Stable id for an iCal feed, so per-calendar settings survive edits to the URL list.
+const icalKey = (url) => 'ical:' + crypto.createHash('sha1').update(url).digest('hex').slice(0, 10);
 
 const LOOKAHEAD_MS = 36 * 60 * 60 * 1000; // expand events for the next 36h
 
@@ -63,15 +67,21 @@ async function getUpcomingEvents(urls) {
   const to = new Date(now + LOOKAHEAD_MS);
   const out = [];
   const errors = [];
+  const sources = [];
 
-  for (const url of urls) {
+  for (const [i, url] of urls.entries()) {
+    const key = icalKey(url);
     let data;
     try {
       data = await fetchFeed(url);
     } catch (e) {
       errors.push(e.message);
+      sources.push({ key, name: `Calendar ${i + 1}`, url });
       continue;
     }
+    const cal = Object.values(data).find((c) => c && c.type === 'VCALENDAR') || {};
+    const name = text(cal['WR-CALNAME'] || cal['X-WR-CALNAME']) || `Calendar ${i + 1}`;
+    sources.push({ key, name, url });
     for (const ev of Object.values(data)) {
       if (!ev || ev.type !== 'VEVENT' || !ev.start) continue;
       if (text(ev.status).toUpperCase() === 'CANCELLED') continue;
@@ -97,13 +107,15 @@ async function getUpcomingEvents(urls) {
           calendarUrl: text(e.url) || null,
           organizer: (e.organizer && e.organizer.params && e.organizer.params.CN) || '',
           attendees: attendeeNames(e),
+          accountKey: key,
+          account: name,
         });
       }
     }
   }
 
   out.sort((a, b) => a.start - b.start);
-  return { events: out, errors };
+  return { events: out, errors, sources };
 }
 
-module.exports = { getUpcomingEvents, findMeetingLink, cleanDescription, text, LOOKAHEAD_MS };
+module.exports = { getUpcomingEvents, findMeetingLink, cleanDescription, text, icalKey, LOOKAHEAD_MS };

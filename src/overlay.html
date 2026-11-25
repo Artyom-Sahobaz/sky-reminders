@@ -50,6 +50,10 @@
     border-left: 4px solid #e9b949;
   }
   .banner small { font-weight: 600; color: #7a5a00; margin-left: 6px; }
+  /* long titles shorten; the account tag and countdown always stay visible */
+  .banner { display: flex; align-items: center; max-width: 440px; }
+  .banner [data-title] { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .banner small, .banner .who { flex: none; }
   @keyframes flutter { 0%, 100% { transform: skewY(0deg) scaleY(1) } 50% { transform: skewY(-2.2deg) scaleY(.96) } }
 
   /* tag: hanging name tag (balloon) */
@@ -112,6 +116,21 @@
   button.cancel:hover { background: #fdecea; filter: none; }
   .x { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; padding: 0; border-radius: 50%; font-size: 16px; line-height: 28px; background: transparent; color: var(--muted); }
   .x:hover { background: #efe7da; }
+  /* which calendar/account the reminder is for */
+  .who {
+    display: inline-block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: 1px;
+    background: var(--acct, #4f7cff); color: #fff; font-size: 11.5px; font-weight: 600; letter-spacing: 0;
+    border-radius: 999px; padding: 2px 9px; margin-right: 9px;
+  }
+  .who[hidden] { display: none; }
+  .say .who, .tag .who { display: block; width: fit-content; margin: 0 auto 4px; }
+  .say .who[hidden], .tag .who[hidden] { display: none; }
+  .flight[style*="--acct"] .banner { border-left-color: var(--acct); }
+  .flight[style*="--acct"] .say { box-shadow: 0 0 0 2px var(--acct); }
+  .flight[style*="--acct"] .say-tail { background: var(--acct); }
+  .flight[style*="--acct"] .tag { border-color: var(--acct); }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 0; }
+  .acct-mail { color: var(--muted); font-style: normal; }
   .craft { position: relative; }
   .zzz {
     position: absolute; left: 50%; top: -6px; transform: translateX(-50%); white-space: nowrap;
@@ -164,6 +183,10 @@
 
   function cardHtml(r) {
     const rows = [];
+    if (r.accountName) {
+      const sub = r.accountEmail && r.accountEmail !== r.accountName ? ` <i class="acct-mail">${esc(r.accountEmail)}</i>` : '';
+      rows.push(`<div class="row"><b>Calendar</b><span><i class="dot" style="background:${esc(r.accountColor || '#4f7cff')}"></i>${esc(r.accountName)}${sub}</span></div>`);
+    }
     if (r.location) rows.push(`<div class="row"><b>Where</b><span>${esc(r.location)}</span></div>`);
     if (r.organizer) rows.push(`<div class="row"><b>Organizer</b><span>${esc(r.organizer)}</span></div>`);
     if (r.attendees && r.attendees.length) rows.push(`<div class="row"><b>Guests</b><span>${esc(r.attendees.join(', '))}</span></div>`);
@@ -189,13 +212,20 @@
     const slot = freeSlot(V.lane);
     const el = document.createElement('div');
     el.className = `flight ${V.lane} ${V.kind === 'tag' ? 'tag-kind' : V.kind} v-${r.style}`;
-    const label = `<span data-title></span><small data-short></small>`;
+    const label = `<b class="who" hidden></b><span data-title></span><small data-short></small>`;
     let craft;
     if (V.kind === 'tow') craft = `${V.svg}<div class="rope"></div><div class="banner">${label}</div>`;
     else if (V.kind === 'tag') craft = `${V.svg}<div class="tag">${label}</div>`;
     else craft = `<div class="say">${label}<div class="say-tail"></div></div>${V.svg}`;
     el.innerHTML = `<div class="bob"><div class="craft hit" data-act="toggle">${craft}</div>${cardHtml(r)}</div>`;
     el.querySelector('[data-title]').textContent = r.title;
+    const who = el.querySelector('.who');
+    if (r.showAccount && r.accountName) {
+      who.hidden = false;
+      who.textContent = r.accountName;
+      who.title = r.accountEmail || r.accountName;
+      el.style.setProperty('--acct', r.accountColor || '#4f7cff');
+    }
     document.body.appendChild(el);
     const entry = { el, r, slot, lane: V.lane, V };
     active.set(r.id, entry);

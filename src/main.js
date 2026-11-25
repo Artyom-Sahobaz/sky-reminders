@@ -1,7 +1,7 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, screen, shell, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { getUpcomingEvents } = require('./calendar');
+const { getUpcomingEvents, icalKey } = require('./calendar');
 const { makeTrayIcon } = require('./icon');
 const { VEHICLES, VEHICLE_KEYS } = require('./vehicles');
 const STYLES = ['mix', 'classic', ...VEHICLE_KEYS];
@@ -14,6 +14,10 @@ const BUNDLED = (() => {
   }
 })();
 
+// A separate profile for testing (as a new user would see it). Set before the single-instance
+// lock so a test copy can run next to the real app.
+if (process.env.SKY_DATA_DIR) app.setPath('userData', process.env.SKY_DATA_DIR);
+
 // ---------- single instance ----------
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -21,7 +25,6 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 // ---------- settings + state ----------
-if (process.env.SKY_DATA_DIR) app.setPath('userData', process.env.SKY_DATA_DIR); // for testing a fresh install
 const DATA_DIR = app.getPath('userData');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const FIRED_FILE = path.join(DATA_DIR, 'fired.json');
@@ -35,7 +38,11 @@ const DEFAULTS = {
   launchAtLogin: true,
   pollMinutes: 3,
   google: { clientId: '', clientSecret: '' },
+  accountPrefs: {}, // per calendar: { name, color, style } keyed by account key
 };
+
+// Colours handed out to calendars in order, so each account is easy to tell apart.
+const PALETTE = ['#4f7cff', '#ff6b6b', '#06b88a', '#f59f00', '#9b6bff', '#ff7ac6', '#0fb5cc', '#8a6a50'];
 
 function readJson(file, fallback) {
   try {
@@ -50,6 +57,7 @@ function writeJson(file, obj) {
 }
 
 let settings = { ...DEFAULTS, ...readJson(SETTINGS_FILE, {}) };
+settings.accountPrefs = settings.accountPrefs || {};
 if (!STYLES.includes(settings.style)) settings.style = 'mix'; // older 'auto' setting
 let fired = readJson(FIRED_FILE, {}); // key -> timestamp
 let events = [];
@@ -80,6 +88,37 @@ function credsFor(provider) {
 }
 const providerReady = (p) => !!credsFor(p).clientId;
 const sameAccount = (a, b) => a.provider === b.provider && a.email === b.email;
+const accountKeyOf = (a) => `${a.provider}:${a.email}`;
+let icalSources = []; // [{ key, name, url }] from the last sync
+
+// Every connected calendar (signed-in accounts + iCal feeds) with its display settings.
+function sources() {
+  const list = [
+    ...accounts.map((a) => ({ key: accountKeyOf(a), provider: a.provider, email: a.email, needsSignIn: !!a.needsSignIn })),
+    ...settings.icalUrls.map((url, i) => {
+      const key = icalKey(url);
+      const found = icalSources.find((x) => x.key === key);
+      return { key, provider: 'ical', email: found ? found.name : `Calendar ${i + 1}`, needsSignIn: false };
+    }),
+  ];
+  return list.map((src) => {
+    const pref = settings.accountPrefs[src.key] || {};
+    return { ...src, name: pref.name || '', label: pref.name || src.email, color: pref.color || PALETTE[0], style: pref.style || 'default' };
+  });
+}
+
+// Give each calendar a colour of its own the first time it is seen.
+function assignColors() {
+  let changed = false;
+  for (const src of sources()) {
+    const pref = (settings.accountPrefs[src.key] = settings.accountPrefs[src.key] || {});
+    if (pref.color) continue;
+    const used = new Set(Object.values(settings.accountPrefs).map((p) => p.color).filter(Boolean));
+    pref.color = PALETTE.find((c) => !used.has(c)) || PALETTE[Object.keys(settings.accountPrefs).length % PALETTE.length];
+    changed = true;
+  }
+  if (changed) writeJson(SETTINGS_FILE, settings);
+}
 
 function saveFired() {
   const cutoff = Date.now() - 3 * 24 * 3600 * 1000;
@@ -159,16 +198,27 @@ function openSettings() {
 
 // ---------- reminders ----------
 let lastVehicle = null;
-function styleFor(leadMin) {
-  if (VEHICLES[settings.style]) return settings.style;
-  if (settings.style === 'classic') return leadMin >= 10 ? 'plane' : 'balloon';
+// The account's own vehicle choice wins; 'default' follows the main setting.
+function styleFor(leadMin, accountKey) {
+  const own = accountKey && settings.accountPrefs[accountKey] && settings.accountPrefs[accountKey].style;
+  const style = own && own !== 'default' ? own : settings.style;
+  if (VEHICLES[style]) return style;
+  if (style === 'classic') return leadMin >= 10 ? 'plane' : 'balloon';
   const pool = VEHICLE_KEYS.filter((k) => k !== lastVehicle); // never the same one twice in a row
   lastVehicle = pool[Math.floor(Math.random() * pool.length)];
   return lastVehicle;
 }
 
+function accountInfo(key) {
+  const all = sources();
+  const src = all.find((x) => x.key === key);
+  return src
+    ? { accountName: src.label, accountEmail: src.email, accountColor: src.color, showAccount: all.length > 1 }
+    : {};
+}
+
 function showReminder(ev, leadMin) {
-  sendToOverlay({ ...ev, leadMin, style: styleFor(leadMin), sound: settings.sound });
+  sendToOverlay({ ...ev, ...accountInfo(ev.accountKey), leadMin, style: styleFor(leadMin, ev.accountKey), sound: settings.sound });
 }
 
 function tick() {
@@ -212,6 +262,7 @@ async function sync() {
       const r = await getUpcomingEvents(settings.icalUrls);
       list.push(...r.events);
       errors.push(...r.errors);
+      icalSources = r.sources;
     } catch (e) {
       errors.push(e.message);
     }
@@ -219,7 +270,9 @@ async function sync() {
   const before = JSON.stringify(accounts);
   for (const acc of accounts) {
     try {
-      list.push(...(await PROVIDERS[acc.provider].getAccountEvents(acc, credsFor(acc.provider))));
+      const key = accountKeyOf(acc);
+      const got = await PROVIDERS[acc.provider].getAccountEvents(acc, credsFor(acc.provider));
+      list.push(...got.map((e) => ({ ...e, accountKey: key, account: acc.email })));
       acc.needsSignIn = false;
     } catch (e) {
       // invalid_grant = the person revoked access or the sign-in expired
@@ -228,6 +281,8 @@ async function sync() {
     }
   }
   if (JSON.stringify(accounts) !== before) saveAccounts(); // Microsoft rotates refresh tokens
+  assignColors();
+  // The same meeting on two connected calendars reminds once (from the first calendar listed).
   const seen = new Set();
   events = list
     .filter((e) => (seen.has(e.id) ? false : seen.add(e.id)))
@@ -237,6 +292,7 @@ async function sync() {
     lastSync: new Date(lastSync.at).toISOString(),
     error: lastSync.error,
     accounts: accounts.length,
+    calendars: sources().length,
     upcomingEvents: events.length,
     withMeetingLink: events.filter((e) => e.link).length,
   });
@@ -249,8 +305,11 @@ function statusPayload() {
   const now = Date.now();
   return {
     lastSync,
-    upcoming: events.filter((e) => e.end > now).slice(0, 8),
-    accounts: accounts.map((a) => ({ email: a.email, provider: a.provider, needsSignIn: !!a.needsSignIn })),
+    upcoming: events
+      .filter((e) => e.end > now)
+      .slice(0, 8)
+      .map((e) => ({ ...e, ...accountInfo(e.accountKey) })),
+    accounts: sources(),
     providers: { google: providerReady('google'), microsoft: providerReady('microsoft') },
   };
 }
@@ -272,7 +331,7 @@ function updateTray() {
       {
         label: 'Test a reminder',
         submenu: [
-          { label: 'Surprise me', click: () => testReminder(styleFor(15)) },
+          { label: 'Surprise me', click: () => testReminder(null) },
           { type: 'separator' },
           ...VEHICLE_KEYS.map((k) => ({ label: VEHICLES[k].label, click: () => testReminder(k) })),
         ],
@@ -289,7 +348,10 @@ const TEST_TITLES = {
   helicopter: 'Client check-in', balloon: 'Quick sync call', car: 'Coffee chat with Sam',
   bike: '1:1 with Priya', scooter: 'Standup', boat: 'Product demo',
 };
-function testReminder(style) {
+// style: a vehicle key, or null to pick the way a real reminder would (for accountKey if given).
+function testReminder(style, accountKey) {
+  const key = accountKey || (sources()[0] || {}).key;
+  style = style || styleFor(15, key);
   const sky = VEHICLES[style] && VEHICLES[style].lane === 'sky' && style !== 'balloon';
   const lead = sky ? 15 : 5;
   const start = Date.now() + lead * 60000;
@@ -306,6 +368,7 @@ function testReminder(style) {
     leadMin: lead,
     style,
     sound: settings.sound,
+    ...accountInfo(key),
   });
 }
 
@@ -362,13 +425,28 @@ ipcMain.handle('save-settings', async (_e, next) => {
       clientId: String((next.google && next.google.clientId) || '').trim(),
       clientSecret: String((next.google && next.google.clientSecret) || '').trim(),
     },
+    accountPrefs: cleanPrefs(next.accountPrefs),
   };
   writeJson(SETTINGS_FILE, settings);
   applyLoginItem();
   await sync();
   return { settings, status: statusPayload() };
 });
-ipcMain.on('test', (_e, style) => testReminder(VEHICLES[style] ? style : styleFor(15)));
+function cleanPrefs(input) {
+  const out = { ...settings.accountPrefs };
+  for (const [key, p] of Object.entries(input || {})) {
+    if (typeof key !== 'string' || !p || typeof p !== 'object') continue;
+    const cur = out[key] || {};
+    out[key] = {
+      name: String(p.name ?? cur.name ?? '').trim().slice(0, 40),
+      color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : cur.color,
+      style: p.style === 'default' || STYLES.includes(p.style) ? p.style : cur.style || 'default',
+    };
+  }
+  return out;
+}
+ipcMain.on('test', (_e, style, accountKey) => testReminder(VEHICLES[style] ? style : null, accountKey));
+ipcMain.on('account-cancel', () => require('./oauth').cancelSignIn());
 ipcMain.handle('account-add', async (_e, provider) => {
   if (!PROVIDERS[provider]) return { error: 'Unknown provider' };
   if (!providerReady(provider)) return { error: `${provider === 'google' ? 'Google' : 'Microsoft'} sign-in is not set up in this copy of the app yet.` };
@@ -383,9 +461,15 @@ ipcMain.handle('account-add', async (_e, provider) => {
     return { error: friendlyError(e) };
   }
 });
-ipcMain.handle('account-remove', async (_e, acc) => {
-  accounts = accounts.filter((a) => !sameAccount(a, acc));
-  saveAccounts();
+ipcMain.handle('account-remove', async (_e, key) => {
+  if (String(key).startsWith('ical:')) {
+    settings.icalUrls = settings.icalUrls.filter((u) => icalKey(u) !== key);
+  } else {
+    accounts = accounts.filter((a) => accountKeyOf(a) !== key);
+    saveAccounts();
+  }
+  delete settings.accountPrefs[key];
+  writeJson(SETTINGS_FILE, settings);
   await sync();
   return { status: statusPayload() };
 });
@@ -396,7 +480,7 @@ ipcMain.on('open-settings', openSettings);
 
 function friendlyError(e) {
   const m = String(e.message || e);
-  if (/access_denied/i.test(m)) return 'Sign-in was cancelled. Nothing was connected.';
+  if (/access_denied|^cancelled$/i.test(m)) return 'Sign-in was cancelled. Nothing was connected.';
   if (/admin_policy_enforced|admin/i.test(m)) return 'Your organisation blocks this app. Ask your IT admin to allow it.';
   if (/timed out/i.test(m)) return 'Sign-in took too long. Please try again.';
   return m;
@@ -449,6 +533,8 @@ app.whenReady().then(() => {
     );
   }
   if (process.argv.includes('--test')) setTimeout(() => testReminder('plane'), 1200);
+  const accArg = process.argv.find((a) => a.startsWith('--accounts-shot='));
+  if (accArg) accountsShot(accArg.slice('--accounts-shot='.length));
   const galArg = process.argv.find((a) => a.startsWith('--gallery='));
   if (galArg) gallery(galArg.slice('--gallery='.length));
   const shotArg = process.argv.find((a) => a.startsWith('--selftest='));
@@ -522,6 +608,25 @@ async function gallery(dir) {
     await overlay.webContents.executeJavaScript('[...active.keys()].forEach((id) => remove(id, true)); 1');
     await wait(300);
   }
+  app.exit(0);
+}
+
+// Multi-calendar check: waits for a sync, shows reminders, opens a card and Settings, saves captures.
+async function accountsShot(dir) {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const save = async (win, name) => fs.writeFileSync(path.join(dir, name), (await win.webContents.capturePage()).toPNG());
+  await wait(9000); // first sync + the due reminder from the test feed
+  const work = sources().find((x) => x.provider === 'google');
+  if (work) testReminder(null, work.key);
+  await wait(4500);
+  await save(overlay, 'accounts-1-reminders.png');
+  await overlay.webContents.executeJavaScript("document.querySelector('.flight .craft').click(); 1");
+  await wait(1200);
+  await save(overlay, 'accounts-2-card.png');
+  openSettings();
+  await wait(2500);
+  await save(settingsWin, 'accounts-3-settings.png');
+  console.log('sources:', JSON.stringify(sources().map((x) => [x.provider, x.label, x.color, x.style])));
   app.exit(0);
 }
 

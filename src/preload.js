@@ -10,10 +10,11 @@ contextBridge.exposeInMainWorld('sky', {
   cancelReminders: (id) => ipcRenderer.send('cancel-reminders', id),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (s) => ipcRenderer.invoke('save-settings', s),
-  test: (style) => ipcRenderer.send('test', style),
+  test: (style, accountKey) => ipcRenderer.send('test', style, accountKey),
   getStatus: () => ipcRenderer.invoke('get-status'),
   accountAdd: (provider) => ipcRenderer.invoke('account-add', provider),
-  accountRemove: (acc) => ipcRenderer.invoke('account-remove', acc),
+  accountRemove: (key) => ipcRenderer.invoke('account-remove', key),
+  accountCancel: () => ipcRenderer.send('account-cancel'),
   welcomeDone: () => ipcRenderer.send('welcome-done'),
   openSettings: () => ipcRenderer.send('open-settings'),
 });
