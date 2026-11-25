@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sky Reminders – never miss a meeting</title>
+<meta name="description" content="A free Windows app that flies a little plane or balloon onto your screen before each Google Calendar meeting, with the join link one click away." />
+<style>
+  @font-face { font-family: "Inter"; src: url("fonts/inter-var.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+  body { -webkit-font-smoothing: antialiased; font-feature-settings: "cv11", "ss01", "ss03"; letter-spacing: -0.006em; }
+  h1, h2 { letter-spacing: -0.022em; }
+  :root { --ink: #2b2d42; --muted: #5d6178; --line: #eadfce; --cream: #fdf6ec; --coral: #ff6b6b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); font: 17px/1.6 "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: linear-gradient(180deg, #dff4fb 0%, var(--cream) 520px); }
+  main { max-width: 880px; margin: 0 auto; padding: 64px 24px 80px; }
+  .hero { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; }
+  h1 { font-size: 52px; line-height: 1.05; margin: 0 0 16px; letter-spacing: -1px; }
+  .lead { font-size: 20px; color: var(--muted); margin: 0 0 28px; max-width: 520px; }
+  .cta { display: inline-block; background: var(--coral); color: #fff; font-weight: 700; text-decoration: none;
+    padding: 14px 24px; border-radius: 14px; }
+  .note { font-size: 14px; color: var(--muted); margin-top: 10px; }
+  .balloon { width: 170px; animation: float 4s ease-in-out infinite; }
+  @keyframes float { 0%, 100% { transform: translateY(0) rotate(-2deg) } 50% { transform: translateY(-10px) rotate(2deg) } }
+  h2 { font-size: 26px; margin: 64px 0 16px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .step { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+  .step b { display: block; font-size: 18px; margin-bottom: 6px; }
+  .step p { margin: 0; color: var(--muted); font-size: 15px; }
+  ul { padding-left: 22px; } li { margin: 6px 0; }
+  a { color: #e85a5a; }
+  footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px;
+    display: flex; gap: 18px; flex-wrap: wrap; }
+  @media (max-width: 680px) { .hero { grid-template-columns: 1fr; } .balloon { width: 120px; } h1 { font-size: 38px; } .steps { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div>
+      <h1>Never miss a meeting again.</h1>
+      <p class="lead">Sky Reminders is a free Windows app. Before each meeting on your Google Calendar, a
+        little plane or hot-air balloon flies onto your screen. Click it to see the details and join in one click.</p>
+      <a class="cta" href="#download">Download for Windows</a>
+      <div class="note">Free · Windows 10 and 11 · Read-only calendar access</div>
+    </div>
+    <svg class="balloon" viewBox="0 0 118 160" role="img" aria-label="Smiling hot-air balloon">
+      <defs><clipPath id="env"><path d="M59 4 C22 4 4 32 4 58 C4 86 34 106 46 120 L72 120 C84 106 114 86 114 58 C114 32 96 4 59 4 Z"/></clipPath></defs>
+      <g clip-path="url(#env)">
+        <rect width="118" height="130" fill="#ff6b6b"/>
+        <path d="M59 0 C38 30 38 90 50 130 L68 130 C80 90 80 30 59 0 Z" fill="#fffaf2"/>
+        <path d="M24 0 C10 40 22 90 40 130 L46 130 C34 90 26 40 40 0 Z" fill="#ffd166"/>
+        <path d="M94 0 C108 40 96 90 78 130 L72 130 C84 90 92 40 78 0 Z" fill="#ffd166"/>
+      </g>
+      <path d="M46 120 L50 138 M72 120 L68 138" stroke="#8a6a50" stroke-width="2"/>
+      <rect x="47" y="136" width="24" height="18" rx="4" fill="#b07a4a"/>
+      <path d="M52 66 q7 6 14 0" stroke="#2b2d42" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="48" cy="56" r="3" fill="#2b2d42"/><circle cx="70" cy="56" r="3" fill="#2b2d42"/>
+    </svg>
+  </section>
+
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="step"><b>1. Connect</b><p>Click Continue with Google and sign in with your Gmail or Google Workspace account. That's all the setup.</p></div>
+    <div class="step"><b>2. Get a heads-up</b><p>15 minutes before a meeting a plane flies in. At 5 minutes, a balloon floats up.</p></div>
+    <div class="step"><b>3. Join</b><p>Click it for the time, guests and notes, then Join. Double-click to snooze for 2 minutes.</p></div>
+  </div>
+
+  <h2>What Sky Reminders does with your calendar</h2>
+  <ul>
+    <li>It reads your upcoming events (title, time, location, notes, meeting link, guests) to show reminders on your computer.</li>
+    <li>It never changes your calendar, and it doesn't read your email, contacts or files.</li>
+    <li>Your calendar data stays on your computer. It is not sent to us, sold or shared.</li>
+  </ul>
+  <p>Read the full <a href="privacy.html">Privacy Policy</a>.</p>
+
+  <h2 id="download">Download</h2>
+  <p>Download link coming soon. Questions? Email <a href="mailto:myassistant@flowvirtualassistant.com">myassistant@flowvirtualassistant.com</a>.</p>
+
+  <footer>
+    <span>© 2026 Flow Virtual Assistant</span>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="mailto:myassistant@flowvirtualassistant.com">Contact</a>
+  </footer>
+</main>
+</body>
+</html>

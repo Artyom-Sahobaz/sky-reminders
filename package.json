@@ -1,0 +1,18 @@
+{
+  "name": "sky-reminders",
+  "version": "1.0.0",
+  "description": "Cute desktop meeting reminders: a plane, balloon, car or boat brings each Google Calendar meeting onto your screen",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test-popup": "electron . --test"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "node-ical": "^0.27.6"
+  },
+  "devDependencies": {
+    "electron": "^45.4.1"
+  }
+}

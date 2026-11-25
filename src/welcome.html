@@ -1,0 +1,159 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'" />
+<title>Welcome to Sky Reminders</title>
+<style>
+  @font-face { font-family: "Inter"; src: url("fonts/inter-var.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+  body { -webkit-font-smoothing: antialiased; font-feature-settings: "cv11", "ss01", "ss03"; letter-spacing: -0.006em; }
+  h1, h2 { letter-spacing: -0.022em; }
+  :root { --ink: #2b2d42; --muted: #6b6f86; --cream: #fdf6ec; --line: #eadfce; --coral: #ff6b6b; --mint: #06d6a0; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; color: var(--ink); font: 14px/1.5 "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: linear-gradient(180deg, #dff4fb 0%, #fdf6ec 58%);
+    display: flex; flex-direction: column; align-items: center; padding: 26px 36px 18px; user-select: none; overflow: hidden;
+  }
+  .hero svg { width: 80px; height: 108px; animation: float 4s ease-in-out infinite; filter: drop-shadow(0 10px 14px rgba(43,45,66,.18)); }
+  @keyframes float { 0%, 100% { transform: translateY(0) rotate(-2deg) } 50% { transform: translateY(-8px) rotate(2deg) } }
+  .cloud { position: absolute; background: #fff; border-radius: 999px; opacity: .9; }
+  h1 { font-size: 24px; margin: 10px 0 4px; text-align: center; letter-spacing: -.2px; }
+  .sub { color: var(--muted); margin: 0 0 20px; text-align: center; max-width: 330px; }
+  .btns { width: 100%; max-width: 330px; display: grid; gap: 12px; }
+  button.sso {
+    display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 48px;
+    font: inherit; font-size: 15px; font-weight: 600; color: #1f1f1f; background: #fff; cursor: pointer;
+    border: 1px solid #d6d9e0; border-radius: 12px; box-shadow: 0 1px 2px rgba(43,45,66,.06);
+    transition: box-shadow .15s, transform .1s, background .15s;
+  }
+  button.sso:hover:not(:disabled) { box-shadow: 0 4px 14px rgba(43,45,66,.12); }
+  button.sso:active:not(:disabled) { transform: scale(.985); }
+  button.sso:disabled { opacity: .5; cursor: default; }
+  button.sso[hidden] { display: none; }
+  button.sso svg { width: 20px; height: 20px; flex: none; }
+  .soon { font-size: 11px; font-weight: 600; color: var(--muted); background: #efe7da; border-radius: 999px; padding: 1px 8px; }
+  .msg { min-height: 22px; margin-top: 14px; font-size: 13px; text-align: center; color: var(--muted); max-width: 330px; }
+  .msg.err { color: #c0392b; }
+  .connected { width: 100%; max-width: 330px; display: none; }
+  .done .connected { display: block; }
+  .done .start { display: none; }
+  .acct { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .acct .tick { width: 22px; height: 22px; border-radius: 50%; background: var(--mint); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600; flex: none; }
+  .acct span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .next { font-size: 13px; color: var(--muted); margin: 8px 2px 14px; }
+  .primary { width: 100%; height: 46px; border: 0; border-radius: 12px; background: var(--coral); color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .linkish { background: none; border: 0; font: inherit; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px; }
+  .foot { margin-top: auto; padding-top: 18px; font-size: 12px; color: var(--muted); text-align: center; max-width: 340px; }
+  .foot b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <svg viewBox="0 0 118 160" aria-hidden="true">
+      <defs><clipPath id="env"><path d="M59 4 C22 4 4 32 4 58 C4 86 34 106 46 120 L72 120 C84 106 114 86 114 58 C114 32 96 4 59 4 Z"/></clipPath></defs>
+      <g clip-path="url(#env)">
+        <rect x="0" y="0" width="118" height="130" fill="#ff6b6b"/>
+        <path d="M59 0 C38 30 38 90 50 130 L68 130 C80 90 80 30 59 0 Z" fill="#fffaf2"/>
+        <path d="M24 0 C10 40 22 90 40 130 L46 130 C34 90 26 40 40 0 Z" fill="#ffd166"/>
+        <path d="M94 0 C108 40 96 90 78 130 L72 130 C84 90 92 40 78 0 Z" fill="#ffd166"/>
+      </g>
+      <path d="M46 120 L50 138 M72 120 L68 138" stroke="#8a6a50" stroke-width="2"/>
+      <rect x="47" y="136" width="24" height="18" rx="4" fill="#b07a4a"/>
+      <path d="M52 66 q7 6 14 0" stroke="#2b2d42" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="48" cy="56" r="3" fill="#2b2d42"/><circle cx="70" cy="56" r="3" fill="#2b2d42"/>
+      <circle cx="42" cy="64" r="4" fill="#ff9a9a" opacity=".7"/><circle cx="76" cy="64" r="4" fill="#ff9a9a" opacity=".7"/>
+    </svg>
+  </div>
+
+  <div class="start">
+    <h1>Never miss a meeting</h1>
+    <p class="sub">Connect your calendar and a little plane or balloon will fly in before each meeting, with the join link one click away.</p>
+  </div>
+  <div class="connected">
+    <h1>You're all set! 🎉</h1>
+    <p class="sub">Reminders will fly in 15 and 5 minutes before your meetings.</p>
+  </div>
+
+  <div class="btns start">
+    <button class="sso" id="google">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
+    </button>
+    <button class="sso" id="microsoft" hidden>
+      <svg viewBox="0 0 21 21" aria-hidden="true">
+        <rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+      </svg>
+      Continue with Microsoft <span class="soon" id="msSoon" hidden>coming soon</span>
+    </button>
+  </div>
+
+  <div class="connected">
+    <div id="accts"></div>
+    <div class="next" id="next"></div>
+    <button class="primary" id="done">Start reminders</button>
+    <div style="text-align:center;margin-top:8px"><button class="linkish" id="another">Connect another calendar</button></div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <div class="foot">
+    <b>Read-only.</b> Sky Reminders can see your meetings but never change them.
+    Your sign-in stays on this computer. <button class="linkish" id="other" style="font-size:12px">Other ways to connect</button>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const msg = (text, err) => { $('msg').textContent = text || ''; $('msg').className = 'msg' + (err ? ' err' : ''); };
+  let busy = false;
+
+  function render(status) {
+    const ms = status.providers && status.providers.microsoft;
+    $('microsoft').hidden = !ms; // shown once a Microsoft app ID is configured
+    $('google').disabled = !(status.providers && status.providers.google);
+    if (!status.accounts.length) return;
+    document.body.classList.add('done');
+    $('accts').innerHTML = '';
+    for (const a of status.accounts) {
+      const row = document.createElement('div');
+      row.className = 'acct';
+      const t = document.createElement('div'); t.className = 'tick'; t.textContent = '✓';
+      const s = document.createElement('span'); s.textContent = a.email;
+      row.append(t, s);
+      $('accts').appendChild(row);
+    }
+    const n = status.upcoming.length;
+    const first = status.upcoming.find((e) => e.start > Date.now());
+    $('next').textContent = n
+      ? `${n} meeting${n === 1 ? '' : 's'} coming up` + (first ? ` · next: ${first.title} at ${new Date(first.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : '')
+      : 'No meetings in the next day and a half.';
+  }
+
+  async function connect(provider) {
+    if (busy) return;
+    busy = true;
+    msg('A sign-in page opened in your browser. Finish there, then come back here.');
+    const res = await window.sky.accountAdd(provider);
+    busy = false;
+    if (res.error) return msg(res.error, true);
+    msg('');
+    render(res.status);
+  }
+
+  $('google').onclick = () => connect('google');
+  $('microsoft').onclick = () => connect('microsoft');
+  $('done').onclick = () => window.sky.welcomeDone();
+  $('another').onclick = () => document.body.classList.remove('done');
+  $('other').onclick = () => window.sky.openSettings();
+  window.sky.getStatus().then(render);
+  window.sky.onStatus(render);
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+
+# Sign-in app IDs and secret for this install. Copy src/oauth-config.example.json to create it.
+src/oauth-config.json
+
+*.log
+.DS_Store
+Thumbs.db

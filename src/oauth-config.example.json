@@ -1,0 +1,10 @@
+{
+  "_note": "Copy this file to oauth-config.json and fill it in. oauth-config.json is not committed. Google: OAuth client of type 'Desktop app' (Google Cloud > Google Auth Platform > Clients). Microsoft: Entra app registration with a 'Mobile and desktop' redirect of http://localhost (public client, no secret). Leave a clientId empty to hide that sign-in button.",
+  "google": {
+    "clientId": "",
+    "clientSecret": ""
+  },
+  "microsoft": {
+    "clientId": ""
+  }
+}
