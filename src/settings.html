@@ -109,6 +109,14 @@
           <option value="classic">Classic: plane, then balloon</option>
         </select>
       </div>
+      <div>
+        <label for="side">Which side they come from</label>
+        <select id="side">
+          <option value="right">Right side</option>
+          <option value="left">Left side</option>
+          <option value="mix">Either side (mix)</option>
+        </select>
+      </div>
     </div>
     <label class="check"><input id="sound" type="checkbox" /> Play a little chime</label>
     <label class="check"><input id="login" type="checkbox" /> Start when Windows starts</label>
@@ -146,6 +154,7 @@
       $('urls').value = settings.icalUrls.join('\n');
       $('leads').value = settings.leads.join(', ');
       $('style').value = settings.style;
+      $('side').value = settings.side || 'right';
       $('sound').checked = settings.sound;
       $('login').checked = settings.launchAtLogin;
       $('cid').value = settings.google.clientId;
@@ -263,6 +272,7 @@
       icalUrls: $('urls').value.split(/\s+/).filter(Boolean),
       leads: $('leads').value.split(/[,\s]+/).filter(Boolean),
       style: $('style').value,
+      side: $('side').value,
       sound: $('sound').checked,
       launchAtLogin: $('login').checked,
       google: { clientId: $('cid').value, clientSecret: $('csecret').value },

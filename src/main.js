@@ -35,6 +35,7 @@ const DEFAULTS = {
   leads: [15, 5], // minutes before start
   style: 'mix', // mix (a different vehicle each time) | classic (plane, then balloon) | one vehicle key
   sound: true,
+  side: 'right', // which edge of the screen vehicles come from: right | left | mix
   launchAtLogin: true,
   pollMinutes: 3,
   google: { clientId: '', clientSecret: '' },
@@ -209,6 +210,12 @@ function styleFor(leadMin, accountKey) {
   return lastVehicle;
 }
 
+const SIDES = ['right', 'left', 'mix'];
+function sideFor() {
+  if (settings.side === 'left' || settings.side === 'right') return settings.side;
+  return Math.random() < 0.5 ? 'left' : 'right';
+}
+
 function accountInfo(key) {
   const all = sources();
   const src = all.find((x) => x.key === key);
@@ -218,7 +225,7 @@ function accountInfo(key) {
 }
 
 function showReminder(ev, leadMin) {
-  sendToOverlay({ ...ev, ...accountInfo(ev.accountKey), leadMin, style: styleFor(leadMin, ev.accountKey), sound: settings.sound });
+  sendToOverlay({ ...ev, ...accountInfo(ev.accountKey), leadMin, style: styleFor(leadMin, ev.accountKey), side: sideFor(), sound: settings.sound });
 }
 
 function tick() {
@@ -367,6 +374,7 @@ function testReminder(style, accountKey) {
     attendees: ['You', 'Your team'],
     leadMin: lead,
     style,
+    side: sideFor(),
     sound: settings.sound,
     ...accountInfo(key),
   });
@@ -420,6 +428,7 @@ ipcMain.handle('save-settings', async (_e, next) => {
     leads: leads.length ? [...new Set(leads)] : DEFAULTS.leads,
     style: STYLES.includes(next.style) ? next.style : 'mix',
     sound: !!next.sound,
+    side: SIDES.includes(next.side) ? next.side : 'right',
     launchAtLogin: !!next.launchAtLogin,
     google: {
       clientId: String((next.google && next.google.clientId) || '').trim(),
