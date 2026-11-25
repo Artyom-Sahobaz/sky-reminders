@@ -186,7 +186,7 @@ function openSettings() {
   settingsWin = new BrowserWindow({
     width: 560,
     height: 720,
-    title: 'Sky Reminders',
+    title: 'Sky Reminders by FlowVA',
     autoHideMenuBar: true,
     backgroundColor: '#fdf6ec',
     icon: makeTrayIcon(64),
@@ -494,7 +494,7 @@ function openWelcome() {
     width: 480,
     height: 640,
     resizable: false,
-    title: 'Welcome to Sky Reminders',
+    title: 'Welcome to Sky Reminders by FlowVA',
     autoHideMenuBar: true,
     backgroundColor: '#fdf6ec',
     icon: makeTrayIcon(64),
