@@ -322,7 +322,7 @@ function updateTray() {
     : settings.icalUrls.length || accounts.length
       ? 'Nothing coming up soon'
       : 'Sign in to connect your calendar';
-  tray.setToolTip(`Sky Reminders\n${nextLabel}`);
+  tray.setToolTip(`Sky Reminders by FlowVA\n${nextLabel}`);
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: nextLabel, enabled: false },
